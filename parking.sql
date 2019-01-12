@@ -1,16 +1,16 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : myself
+Source Server         : 蓝色按钮
 Source Server Version : 50724
-Source Host           : 39.105.123.197 :3307
+Source Host           : 118.31.15.108:3306
 Source Database       : parking
 
 Target Server Type    : MYSQL
 Target Server Version : 50724
 File Encoding         : 65001
 
-Date: 2019-01-02 20:52:33
+Date: 2019-01-12 20:26:11
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -132,6 +132,31 @@ INSERT INTO `t_authority` VALUES ('51', '添加广告', 'banner-add', null, null
 INSERT INTO `t_authority` VALUES ('52', '系统参数设置', 'setting-change', null, null, '系统参数设置', null, null, null, null);
 
 -- ----------------------------
+-- Table structure for t_config
+-- ----------------------------
+DROP TABLE IF EXISTS `t_config`;
+CREATE TABLE `t_config` (
+  `config_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+  `company_name` varchar(255) DEFAULT NULL COMMENT '公司名称',
+  `company_mobile` varchar(255) DEFAULT NULL COMMENT '公司电话',
+  `company_address` varchar(255) DEFAULT NULL COMMENT '公司地址',
+  `copy_right` varchar(255) DEFAULT NULL,
+  `pro_price` int(11) DEFAULT NULL COMMENT 'pro版报告的价格，VIP免费',
+  `video_price` int(11) DEFAULT NULL COMMENT '付费视频的价格，Vip前面99个免费',
+  `year_price` int(11) DEFAULT NULL COMMENT '年卡会员的价格',
+  `activated` int(1) DEFAULT NULL,
+  `deleted` int(1) DEFAULT NULL,
+  `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `created_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`config_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of t_config
+-- ----------------------------
+INSERT INTO `t_config` VALUES ('1', 'cdacd', 'cdds', 'cdac', 'cda', null, null, null, null, null, '2019-01-12 19:28:46', null);
+
+-- ----------------------------
 -- Table structure for t_coupon
 -- ----------------------------
 DROP TABLE IF EXISTS `t_coupon`;
@@ -139,21 +164,24 @@ CREATE TABLE `t_coupon` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '优惠券',
   `type` int(1) DEFAULT NULL COMMENT '优惠券的类型 1 通用 2 指定停车场',
   `parking_id` int(11) DEFAULT NULL COMMENT '停车场Id，只有type=2的时候才有意义',
+  `status` int(11) DEFAULT NULL COMMENT '满减类型，1 满减 ，-1无门槛',
   `full` int(11) DEFAULT '-1' COMMENT '满减，如果为-1 表示无门槛',
-  `money` decimal(11,2) DEFAULT '0.00' COMMENT '减少的钱',
+  `money` int(11) DEFAULT '0' COMMENT '减少的钱，单位为分',
   `total` int(11) DEFAULT NULL COMMENT '总数,超过这个数量不会送',
+  `time_interval` int(11) DEFAULT NULL COMMENT '停车的时间，分钟单位，到达了这个值才会给这个优惠券',
   `activated` int(1) DEFAULT NULL,
   `deleted` int(1) DEFAULT NULL,
-  `created_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `created_date` datetime DEFAULT NULL,
   `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of t_coupon
 -- ----------------------------
-INSERT INTO `t_coupon` VALUES ('2', '2', '1', '-1', '20.00', '100', null, null, '2019-01-02 19:31:14', '2019-01-02 19:31:14');
-INSERT INTO `t_coupon` VALUES ('3', '1', null, '10', '100.00', '100', null, null, '2019-01-02 19:32:24', null);
+INSERT INTO `t_coupon` VALUES ('3', '1', null, '1', '10', '100', '100', '100', null, null, '2019-01-02 19:32:24', '2019-01-08 16:24:45');
+INSERT INTO `t_coupon` VALUES ('6', '2', '2', '1', '100', '10', '10', '100', null, null, '2019-01-08 16:07:29', '2019-01-08 16:24:46');
+INSERT INTO `t_coupon` VALUES ('7', '2', '2', '1', '100', '10', '100', '100', null, null, '2019-01-08 16:27:52', null);
 
 -- ----------------------------
 -- Table structure for t_dict_areas
@@ -3726,50 +3754,624 @@ INSERT INTO `t_dict_provinces` VALUES ('33', '810000', '香港特别行政区');
 INSERT INTO `t_dict_provinces` VALUES ('34', '820000', '澳门特别行政区');
 
 -- ----------------------------
+-- Table structure for t_order
+-- ----------------------------
+DROP TABLE IF EXISTS `t_order`;
+CREATE TABLE `t_order` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '订单',
+  `user_id` int(11) DEFAULT NULL,
+  `number` varchar(255) DEFAULT NULL COMMENT '订单编号',
+  `parking_id` int(11) DEFAULT NULL COMMENT '停车场Id',
+  `position_id` int(11) DEFAULT NULL COMMENT '车位Id',
+  `money` int(11) DEFAULT NULL COMMENT '消费金额 ，单位分',
+  `code_url` varchar(250) DEFAULT NULL COMMENT '二维码链接',
+  `start_time` datetime DEFAULT NULL COMMENT '开始时间',
+  `end_time` datetime DEFAULT NULL COMMENT '结束时间',
+  `status` int(1) DEFAULT '1' COMMENT '订单的状态 1 已预约 2 取消 3 待付款 4 已完成',
+  `activated` int(1) DEFAULT NULL,
+  `deleted` int(1) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of t_order
+-- ----------------------------
+INSERT INTO `t_order` VALUES ('10', '1', '68d7ae657be1494195ba03bca2b5136d', '11', null, '240', 'http://www.m-scor.com/blue-upload/code/d2d81f12e8c44116aef477336b596a6d.png', '2019-01-20 12:00:00', '2019-01-20 14:00:00', '4', null, null, '2019-01-12 14:50:57', '2019-01-12 16:34:23');
+
+-- ----------------------------
 -- Table structure for t_parking
 -- ----------------------------
 DROP TABLE IF EXISTS `t_parking`;
 CREATE TABLE `t_parking` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `number` varchar(250) DEFAULT NULL COMMENT '停车场的编号',
+  `name` varchar(255) DEFAULT NULL COMMENT '名称',
+  `number` varchar(250) DEFAULT NULL COMMENT '编号',
   `province_id` int(11) DEFAULT NULL COMMENT '省份',
   `area_id` int(11) DEFAULT NULL COMMENT '区域Id',
   `city_id` int(11) DEFAULT NULL COMMENT '县市的Id',
+  `address` varchar(255) DEFAULT NULL COMMENT '详细地址',
   `mobile` varchar(255) DEFAULT NULL COMMENT '电话 登录用和联系用',
   `web_site` varchar(255) DEFAULT NULL COMMENT '网址',
   `operator` varchar(255) DEFAULT NULL COMMENT '经营人',
   `password` varchar(255) DEFAULT NULL COMMENT '登录的密码',
-  `money` decimal(10,2) DEFAULT NULL COMMENT '每分钟停车所需要的钱',
+  `total` int(11) DEFAULT '0' COMMENT '车位',
+  `leave_count` int(11) DEFAULT '0' COMMENT '剩下的车位，开通年费会员会占用一个',
+  `money` int(11) DEFAULT NULL COMMENT '每分钟停车所需要的钱',
+  `year_money` int(11) DEFAULT NULL,
   `activated` int(1) DEFAULT NULL,
   `deleted` int(1) DEFAULT NULL,
   `created_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of t_parking
 -- ----------------------------
+INSERT INTO `t_parking` VALUES ('11', '星汇大厦', '1547101228002', '310000', '310117', '310100', '上海市松江区九亭镇星汇大厦', '18796327106', null, '陈加兵', '12345678', '200', '200', '2', '300000', null, null, '2019-01-12 14:49:18', '2019-01-12 14:49:18');
+
+-- ----------------------------
+-- Table structure for t_parking_image
+-- ----------------------------
+DROP TABLE IF EXISTS `t_parking_image`;
+CREATE TABLE `t_parking_image` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '停车场图片',
+  `parking_id` int(11) DEFAULT NULL COMMENT '停车场Id',
+  `url` varchar(255) DEFAULT NULL COMMENT 'url',
+  `activated` int(1) DEFAULT NULL,
+  `deleted` int(1) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `index_id` (`parking_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of t_parking_image
+-- ----------------------------
+INSERT INTO `t_parking_image` VALUES ('1', '1', 'http://www.m-scor.com/blue-upload/parking-image/1546927720481yesu2.jpg', null, null, '2019-01-08 14:08:41', null);
+INSERT INTO `t_parking_image` VALUES ('2', '1', 'http://www.m-scor.com/blue-upload/parking-image/1546927720482yesu1.jpg', null, null, '2019-01-08 14:08:41', null);
+INSERT INTO `t_parking_image` VALUES ('3', '1', 'http://www.m-scor.com/blue-upload/parking-image/1546927720482yesu.jpg', null, null, '2019-01-08 14:08:41', null);
+INSERT INTO `t_parking_image` VALUES ('4', '2', 'http://www.m-scor.com/blue-upload/parking-image/1546927797857yesu2.jpg', null, null, '2019-01-08 14:09:58', null);
+INSERT INTO `t_parking_image` VALUES ('5', '2', 'http://www.m-scor.com/blue-upload/parking-image/1546927797857yesu1.jpg', null, null, '2019-01-08 14:09:58', null);
+INSERT INTO `t_parking_image` VALUES ('6', '2', 'http://www.m-scor.com/blue-upload/parking-image/1546927797857yesu.jpg', null, null, '2019-01-08 14:09:58', null);
+INSERT INTO `t_parking_image` VALUES ('7', '3', 'http://www.m-scor.com/blue-upload/parking-image/1546927800139yesu2.jpg', null, null, '2019-01-08 14:10:00', null);
+INSERT INTO `t_parking_image` VALUES ('8', '3', 'http://www.m-scor.com/blue-upload/parking-image/1546927800140yesu1.jpg', null, null, '2019-01-08 14:10:00', null);
+INSERT INTO `t_parking_image` VALUES ('9', '3', 'http://www.m-scor.com/blue-upload/parking-image/1546927800140yesu.jpg', null, null, '2019-01-08 14:10:00', null);
+INSERT INTO `t_parking_image` VALUES ('16', '7', 'http://www.m-scor.com/blue-upload/parking-image/1547006889873yesu1.jpg', null, null, '2019-01-09 12:08:10', null);
+INSERT INTO `t_parking_image` VALUES ('17', '7', 'http://www.m-scor.com/blue-upload/parking-image/1547006889874yesu.jpg', null, null, '2019-01-09 12:08:10', null);
+INSERT INTO `t_parking_image` VALUES ('18', '7', 'http://www.m-scor.com/blue-upload/parking-image/1547006889874timg1.jpg', null, null, '2019-01-09 12:08:10', null);
+INSERT INTO `t_parking_image` VALUES ('19', '8', 'http://www.m-scor.com/blue-upload/parking-image/1547007085659yesu1.jpg', null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_parking_image` VALUES ('20', '8', 'http://www.m-scor.com/blue-upload/parking-image/1547007085660yesu.jpg', null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_parking_image` VALUES ('21', '8', 'http://www.m-scor.com/blue-upload/parking-image/1547007085660timg1.jpg', null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_parking_image` VALUES ('22', '10', 'http://www.m-scor.com/blue-upload/parking-image/1547091747932yesu1.jpg', null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_parking_image` VALUES ('23', '10', 'http://www.m-scor.com/blue-upload/parking-image/1547091747960yesu.jpg', null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_parking_image` VALUES ('24', '10', 'http://www.m-scor.com/blue-upload/parking-image/1547091747960timg1.jpg', null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_parking_image` VALUES ('25', '11', 'http://www.m-scor.com/blue-upload/parking-image/1547101228002yesu.jpg', null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_parking_image` VALUES ('26', '11', 'http://www.m-scor.com/blue-upload/parking-image/1547101228002timg1.jpg', null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_parking_image` VALUES ('27', '11', 'http://www.m-scor.com/blue-upload/parking-image/154710122800220150526211203_HAdiu.jpeg', null, null, '2019-01-10 14:20:28', null);
 
 -- ----------------------------
 -- Table structure for t_position
 -- ----------------------------
 DROP TABLE IF EXISTS `t_position`;
 CREATE TABLE `t_position` (
-  `id` int(11) NOT NULL COMMENT '停车位置',
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '停车位置',
   `parking_id` int(11) DEFAULT NULL COMMENT '停车场Id',
   `number` varchar(255) DEFAULT NULL COMMENT '编号',
-  `status` int(1) DEFAULT NULL COMMENT '状态 1 空闲 2 已经有车',
+  `status` int(1) DEFAULT '1' COMMENT '状态 1 空闲 2 已经有车',
   `activated` int(1) DEFAULT NULL,
   `deleted` int(1) DEFAULT NULL,
   `created_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=601 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of t_position
 -- ----------------------------
+INSERT INTO `t_position` VALUES ('101', '8', '01', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('102', '8', '11', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('103', '8', '21', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('104', '8', '31', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('105', '8', '41', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('106', '8', '51', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('107', '8', '61', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('108', '8', '71', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('109', '8', '81', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('110', '8', '91', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('111', '8', '101', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('112', '8', '111', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('113', '8', '121', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('114', '8', '131', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('115', '8', '141', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('116', '8', '151', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('117', '8', '161', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('118', '8', '171', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('119', '8', '181', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('120', '8', '191', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('121', '8', '201', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('122', '8', '211', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('123', '8', '221', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('124', '8', '231', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('125', '8', '241', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('126', '8', '251', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('127', '8', '261', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('128', '8', '271', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('129', '8', '281', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('130', '8', '291', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('131', '8', '301', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('132', '8', '311', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('133', '8', '321', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('134', '8', '331', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('135', '8', '341', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('136', '8', '351', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('137', '8', '361', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('138', '8', '371', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('139', '8', '381', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('140', '8', '391', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('141', '8', '401', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('142', '8', '411', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('143', '8', '421', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('144', '8', '431', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('145', '8', '441', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('146', '8', '451', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('147', '8', '461', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('148', '8', '471', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('149', '8', '481', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('150', '8', '491', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('151', '8', '501', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('152', '8', '511', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('153', '8', '521', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('154', '8', '531', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('155', '8', '541', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('156', '8', '551', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('157', '8', '561', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('158', '8', '571', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('159', '8', '581', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('160', '8', '591', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('161', '8', '601', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('162', '8', '611', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('163', '8', '621', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('164', '8', '631', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('165', '8', '641', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('166', '8', '651', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('167', '8', '661', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('168', '8', '671', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('169', '8', '681', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('170', '8', '691', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('171', '8', '701', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('172', '8', '711', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('173', '8', '721', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('174', '8', '731', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('175', '8', '741', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('176', '8', '751', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('177', '8', '761', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('178', '8', '771', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('179', '8', '781', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('180', '8', '791', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('181', '8', '801', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('182', '8', '811', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('183', '8', '821', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('184', '8', '831', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('185', '8', '841', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('186', '8', '851', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('187', '8', '861', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('188', '8', '871', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('189', '8', '881', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('190', '8', '891', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('191', '8', '901', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('192', '8', '911', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('193', '8', '921', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('194', '8', '931', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('195', '8', '941', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('196', '8', '951', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('197', '8', '961', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('198', '8', '971', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('199', '8', '981', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('200', '8', '991', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('201', '8', '1001', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('202', '8', '1011', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('203', '8', '1021', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('204', '8', '1031', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('205', '8', '1041', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('206', '8', '1051', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('207', '8', '1061', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('208', '8', '1071', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('209', '8', '1081', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('210', '8', '1091', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('211', '8', '1101', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('212', '8', '1111', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('213', '8', '1121', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('214', '8', '1131', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('215', '8', '1141', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('216', '8', '1151', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('217', '8', '1161', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('218', '8', '1171', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('219', '8', '1181', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('220', '8', '1191', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('221', '8', '1201', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('222', '8', '1211', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('223', '8', '1221', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('224', '8', '1231', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('225', '8', '1241', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('226', '8', '1251', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('227', '8', '1261', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('228', '8', '1271', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('229', '8', '1281', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('230', '8', '1291', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('231', '8', '1301', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('232', '8', '1311', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('233', '8', '1321', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('234', '8', '1331', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('235', '8', '1341', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('236', '8', '1351', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('237', '8', '1361', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('238', '8', '1371', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('239', '8', '1381', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('240', '8', '1391', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('241', '8', '1401', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('242', '8', '1411', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('243', '8', '1421', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('244', '8', '1431', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('245', '8', '1441', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('246', '8', '1451', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('247', '8', '1461', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('248', '8', '1471', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('249', '8', '1481', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('250', '8', '1491', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('251', '8', '1501', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('252', '8', '1511', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('253', '8', '1521', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('254', '8', '1531', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('255', '8', '1541', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('256', '8', '1551', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('257', '8', '1561', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('258', '8', '1571', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('259', '8', '1581', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('260', '8', '1591', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('261', '8', '1601', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('262', '8', '1611', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('263', '8', '1621', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('264', '8', '1631', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('265', '8', '1641', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('266', '8', '1651', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('267', '8', '1661', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('268', '8', '1671', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('269', '8', '1681', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('270', '8', '1691', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('271', '8', '1701', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('272', '8', '1711', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('273', '8', '1721', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('274', '8', '1731', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('275', '8', '1741', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('276', '8', '1751', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('277', '8', '1761', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('278', '8', '1771', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('279', '8', '1781', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('280', '8', '1791', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('281', '8', '1801', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('282', '8', '1811', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('283', '8', '1821', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('284', '8', '1831', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('285', '8', '1841', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('286', '8', '1851', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('287', '8', '1861', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('288', '8', '1871', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('289', '8', '1881', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('290', '8', '1891', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('291', '8', '1901', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('292', '8', '1911', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('293', '8', '1921', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('294', '8', '1931', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('295', '8', '1941', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('296', '8', '1951', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('297', '8', '1961', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('298', '8', '1971', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('299', '8', '1981', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('300', '8', '1991', null, null, null, '2019-01-09 12:11:26', null);
+INSERT INTO `t_position` VALUES ('301', '10', '1', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('302', '10', '2', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('303', '10', '3', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('304', '10', '4', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('305', '10', '5', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('306', '10', '6', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('307', '10', '7', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('308', '10', '8', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('309', '10', '9', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('310', '10', '10', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('311', '10', '11', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('312', '10', '12', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('313', '10', '13', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('314', '10', '14', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('315', '10', '15', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('316', '10', '16', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('317', '10', '17', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('318', '10', '18', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('319', '10', '19', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('320', '10', '20', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('321', '10', '21', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('322', '10', '22', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('323', '10', '23', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('324', '10', '24', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('325', '10', '25', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('326', '10', '26', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('327', '10', '27', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('328', '10', '28', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('329', '10', '29', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('330', '10', '30', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('331', '10', '31', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('332', '10', '32', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('333', '10', '33', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('334', '10', '34', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('335', '10', '35', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('336', '10', '36', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('337', '10', '37', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('338', '10', '38', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('339', '10', '39', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('340', '10', '40', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('341', '10', '41', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('342', '10', '42', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('343', '10', '43', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('344', '10', '44', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('345', '10', '45', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('346', '10', '46', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('347', '10', '47', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('348', '10', '48', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('349', '10', '49', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('350', '10', '50', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('351', '10', '51', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('352', '10', '52', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('353', '10', '53', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('354', '10', '54', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('355', '10', '55', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('356', '10', '56', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('357', '10', '57', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('358', '10', '58', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('359', '10', '59', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('360', '10', '60', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('361', '10', '61', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('362', '10', '62', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('363', '10', '63', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('364', '10', '64', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('365', '10', '65', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('366', '10', '66', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('367', '10', '67', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('368', '10', '68', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('369', '10', '69', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('370', '10', '70', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('371', '10', '71', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('372', '10', '72', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('373', '10', '73', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('374', '10', '74', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('375', '10', '75', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('376', '10', '76', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('377', '10', '77', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('378', '10', '78', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('379', '10', '79', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('380', '10', '80', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('381', '10', '81', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('382', '10', '82', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('383', '10', '83', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('384', '10', '84', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('385', '10', '85', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('386', '10', '86', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('387', '10', '87', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('388', '10', '88', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('389', '10', '89', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('390', '10', '90', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('391', '10', '91', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('392', '10', '92', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('393', '10', '93', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('394', '10', '94', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('395', '10', '95', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('396', '10', '96', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('397', '10', '97', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('398', '10', '98', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('399', '10', '99', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('400', '10', '100', null, null, null, '2019-01-10 11:42:28', null);
+INSERT INTO `t_position` VALUES ('401', '11', '1', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('402', '11', '2', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('403', '11', '3', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('404', '11', '4', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('405', '11', '5', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('406', '11', '6', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('407', '11', '7', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('408', '11', '8', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('409', '11', '9', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('410', '11', '10', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('411', '11', '11', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('412', '11', '12', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('413', '11', '13', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('414', '11', '14', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('415', '11', '15', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('416', '11', '16', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('417', '11', '17', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('418', '11', '18', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('419', '11', '19', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('420', '11', '20', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('421', '11', '21', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('422', '11', '22', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('423', '11', '23', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('424', '11', '24', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('425', '11', '25', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('426', '11', '26', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('427', '11', '27', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('428', '11', '28', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('429', '11', '29', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('430', '11', '30', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('431', '11', '31', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('432', '11', '32', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('433', '11', '33', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('434', '11', '34', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('435', '11', '35', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('436', '11', '36', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('437', '11', '37', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('438', '11', '38', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('439', '11', '39', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('440', '11', '40', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('441', '11', '41', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('442', '11', '42', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('443', '11', '43', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('444', '11', '44', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('445', '11', '45', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('446', '11', '46', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('447', '11', '47', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('448', '11', '48', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('449', '11', '49', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('450', '11', '50', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('451', '11', '51', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('452', '11', '52', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('453', '11', '53', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('454', '11', '54', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('455', '11', '55', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('456', '11', '56', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('457', '11', '57', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('458', '11', '58', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('459', '11', '59', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('460', '11', '60', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('461', '11', '61', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('462', '11', '62', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('463', '11', '63', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('464', '11', '64', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('465', '11', '65', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('466', '11', '66', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('467', '11', '67', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('468', '11', '68', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('469', '11', '69', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('470', '11', '70', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('471', '11', '71', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('472', '11', '72', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('473', '11', '73', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('474', '11', '74', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('475', '11', '75', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('476', '11', '76', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('477', '11', '77', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('478', '11', '78', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('479', '11', '79', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('480', '11', '80', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('481', '11', '81', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('482', '11', '82', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('483', '11', '83', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('484', '11', '84', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('485', '11', '85', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('486', '11', '86', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('487', '11', '87', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('488', '11', '88', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('489', '11', '89', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('490', '11', '90', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('491', '11', '91', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('492', '11', '92', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('493', '11', '93', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('494', '11', '94', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('495', '11', '95', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('496', '11', '96', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('497', '11', '97', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('498', '11', '98', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('499', '11', '99', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('500', '11', '100', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('501', '11', '101', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('502', '11', '102', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('503', '11', '103', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('504', '11', '104', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('505', '11', '105', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('506', '11', '106', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('507', '11', '107', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('508', '11', '108', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('509', '11', '109', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('510', '11', '110', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('511', '11', '111', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('512', '11', '112', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('513', '11', '113', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('514', '11', '114', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('515', '11', '115', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('516', '11', '116', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('517', '11', '117', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('518', '11', '118', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('519', '11', '119', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('520', '11', '120', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('521', '11', '121', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('522', '11', '122', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('523', '11', '123', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('524', '11', '124', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('525', '11', '125', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('526', '11', '126', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('527', '11', '127', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('528', '11', '128', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('529', '11', '129', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('530', '11', '130', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('531', '11', '131', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('532', '11', '132', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('533', '11', '133', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('534', '11', '134', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('535', '11', '135', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('536', '11', '136', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('537', '11', '137', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('538', '11', '138', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('539', '11', '139', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('540', '11', '140', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('541', '11', '141', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('542', '11', '142', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('543', '11', '143', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('544', '11', '144', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('545', '11', '145', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('546', '11', '146', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('547', '11', '147', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('548', '11', '148', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('549', '11', '149', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('550', '11', '150', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('551', '11', '151', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('552', '11', '152', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('553', '11', '153', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('554', '11', '154', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('555', '11', '155', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('556', '11', '156', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('557', '11', '157', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('558', '11', '158', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('559', '11', '159', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('560', '11', '160', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('561', '11', '161', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('562', '11', '162', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('563', '11', '163', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('564', '11', '164', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('565', '11', '165', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('566', '11', '166', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('567', '11', '167', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('568', '11', '168', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('569', '11', '169', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('570', '11', '170', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('571', '11', '171', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('572', '11', '172', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('573', '11', '173', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('574', '11', '174', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('575', '11', '175', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('576', '11', '176', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('577', '11', '177', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('578', '11', '178', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('579', '11', '179', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('580', '11', '180', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('581', '11', '181', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('582', '11', '182', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('583', '11', '183', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('584', '11', '184', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('585', '11', '185', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('586', '11', '186', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('587', '11', '187', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('588', '11', '188', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('589', '11', '189', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('590', '11', '190', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('591', '11', '191', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('592', '11', '192', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('593', '11', '193', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('594', '11', '194', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('595', '11', '195', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('596', '11', '196', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('597', '11', '197', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('598', '11', '198', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('599', '11', '199', null, null, null, '2019-01-10 14:20:28', null);
+INSERT INTO `t_position` VALUES ('600', '11', '200', null, null, null, '2019-01-10 14:20:28', null);
 
 -- ----------------------------
 -- Table structure for t_user
@@ -3785,18 +4387,20 @@ CREATE TABLE `t_user` (
   `gender` int(1) DEFAULT NULL COMMENT '1 男 2 女',
   `car_number` varchar(110) DEFAULT NULL COMMENT '车牌号',
   `user_type` int(1) DEFAULT '3' COMMENT '用户类别  1  银牌会员  2 金牌用户 3 普通用户',
+  `balance` int(11) DEFAULT '0' COMMENT '余额，单位分',
   `activated` int(1) DEFAULT NULL,
   `deleted` int(1) DEFAULT NULL,
-  `created_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `created_date` datetime DEFAULT NULL,
   `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `index_mobile` (`mobile`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of t_user
 -- ----------------------------
-INSERT INTO `t_user` VALUES ('1', 'http://www.m-scor.com/blue-upload/user/1546421790325yesu2.jpg', null, null, '18796327106', '12345678', null, null, null, null, null, '2019-01-02 19:50:30', '2019-01-02 19:50:30');
+INSERT INTO `t_user` VALUES ('1', 'http://www.m-scor.com/blue-upload/user/1546421790325yesu2.jpg', null, null, '18796329208', '12345678', null, '沪Z6266', '3', '99699760', null, null, '2019-01-09 13:11:53', '2019-01-10 14:25:56');
+INSERT INTO `t_user` VALUES ('2', null, null, null, '18796327106', '12345678', null, '沪Z6245', '3', '0', null, null, '2019-01-09 13:11:49', '2019-01-10 10:58:57');
 
 -- ----------------------------
 -- Table structure for t_user_coupon
@@ -3816,7 +4420,7 @@ CREATE TABLE `t_user_coupon` (
 -- ----------------------------
 -- Records of t_user_coupon
 -- ----------------------------
-INSERT INTO `t_user_coupon` VALUES ('1', '1', '2', null, null, null, null);
+INSERT INTO `t_user_coupon` VALUES ('1', '1', '2', null, null, '2019-01-12 16:21:49', '2019-01-12 16:21:49');
 
 -- ----------------------------
 -- Table structure for t_user_parking
@@ -3826,13 +4430,16 @@ CREATE TABLE `t_user_parking` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '年费用户和停车场的绑定',
   `parking_id` int(11) DEFAULT NULL COMMENT '停车场Id',
   `user_id` int(11) DEFAULT NULL COMMENT '用户Id',
+  `code_url` varchar(250) DEFAULT NULL COMMENT '二维码链接',
   `activated` int(1) DEFAULT NULL,
   `deleted` int(1) DEFAULT NULL,
-  `created_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `expire_date` datetime DEFAULT NULL COMMENT '到期时间',
+  `created_date` datetime DEFAULT NULL COMMENT '开通时间',
   `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of t_user_parking
 -- ----------------------------
+INSERT INTO `t_user_parking` VALUES ('1', '1', '1', null, null, null, '2018-12-11 00:00:00', null, null);
